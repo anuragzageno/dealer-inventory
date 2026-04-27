@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  dealer-inventory-db:
+    image: arm64v8/postgres
+    container_name: dealer-inventory-db
+    environment:
+      POSTGRES_PASSWORD: dealer_pass
+      POSTGRES_USER: dealer_user
+      POSTGRES_DB: dealer_inventory
+    ports:
+      - "5412:5432"
+    volumes:
+      - dealer-inventory-db_vol:/var/lib/postgresql
+    networks:
+      - net-search
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dealer_user -d dealer_inventory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dealer-inventory-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dealer-inventory-app
+    depends_on:
+      dealer-inventory-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://dealer-inventory-db:5432/dealer_inventory
+      SPRING_DATASOURCE_USERNAME: dealer_user
+      SPRING_DATASOURCE_PASSWORD: dealer_pass
+      SPRING_LIQUIBASE_CHANGE_LOG: classpath:/db/changelog/db.changelog-master.xml
+    ports:
+      - "8080:8080"
+    networks:
+      - net-search
+
+volumes:
+  dealer-inventory-db_vol:
+
+networks:
+  net-search:

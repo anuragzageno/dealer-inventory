@@ -1,0 +1,812 @@
+{
+  "info": {
+    "name": "Dealer Inventory API",
+    "_postman_id": "dealer-inventory-collection-v1",
+    "description": "Complete API collection for the multi-tenant Dealer & Vehicle Inventory module.\n\n**Setup:** Run requests in order within each folder. \"Create Dealer\" and \"Create Vehicle\" automatically capture IDs into collection variables.\n\n**Users:**\n- tenant1_user / password  →  X-Tenant-Id: tenant-1\n- tenant2_user / password  →  X-Tenant-Id: tenant-2\n- global_admin / admin     →  any X-Tenant-Id (unrestricted)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",    "value": "http://localhost:8080", "type": "string" },
+    { "key": "tenant1Id",  "value": "tenant-1",             "type": "string" },
+    { "key": "tenant2Id",  "value": "tenant-2",             "type": "string" },
+    { "key": "dealerId",   "value": "",                     "type": "string" },
+    { "key": "dealer2Id",  "value": "",                     "type": "string" },
+    { "key": "vehicleId",  "value": "",                     "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01 - Dealers",
+      "item": [
+        {
+          "name": "Create Dealer (PREMIUM) ✅",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('dealerId', json.id);",
+                  "    console.log('Saved dealerId:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ABC Motors\",\n  \"email\": \"abc@motors.com\",\n  \"subscriptionType\": \"PREMIUM\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/dealers", "host": ["{{baseUrl}}"], "path": ["dealers"] },
+            "description": "Creates a PREMIUM dealer for tenant-1. Saves the returned ID as {{dealerId}}.\n\nExpected: 201 Created"
+          }
+        },
+        {
+          "name": "Create Dealer (BASIC) ✅",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('dealer2Id', json.id);",
+                  "    console.log('Saved dealer2Id:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"XYZ Autos\",\n  \"email\": \"xyz@autos.com\",\n  \"subscriptionType\": \"BASIC\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/dealers", "host": ["{{baseUrl}}"], "path": ["dealers"] },
+            "description": "Creates a BASIC dealer for tenant-1. Saves the returned ID as {{dealer2Id}}.\n\nExpected: 201 Created"
+          }
+        },
+        {
+          "name": "Create Dealer - Duplicate Email ❌ 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ABC Motors Duplicate\",\n  \"email\": \"abc@motors.com\",\n  \"subscriptionType\": \"BASIC\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/dealers", "host": ["{{baseUrl}}"], "path": ["dealers"] },
+            "description": "Tries to create a dealer with an already-used email within the same tenant.\n\nExpected: 400 Bad Request"
+          }
+        },
+        {
+          "name": "Create Dealer - Missing X-Tenant-Id ❌ 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"No Tenant Dealer\",\n  \"email\": \"notenant@test.com\",\n  \"subscriptionType\": \"BASIC\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/dealers", "host": ["{{baseUrl}}"], "path": ["dealers"] },
+            "description": "No X-Tenant-Id header provided.\n\nExpected: 400 Bad Request - 'Missing or empty X-Tenant-Id header'"
+          }
+        },
+        {
+          "name": "Create Dealer - Cross-Tenant ❌ 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant2Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Intruder Dealer\",\n  \"email\": \"intruder@test.com\",\n  \"subscriptionType\": \"BASIC\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/dealers", "host": ["{{baseUrl}}"], "path": ["dealers"] },
+            "description": "tenant1_user tries to create a dealer in tenant-2's space.\n\nExpected: 403 Forbidden - 'Cross-tenant access denied'"
+          }
+        },
+        {
+          "name": "Create Dealer - Validation Error ❌ 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"email\": \"not-an-email\",\n  \"subscriptionType\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/dealers", "host": ["{{baseUrl}}"], "path": ["dealers"] },
+            "description": "Sends invalid fields (blank name, bad email, null subscriptionType).\n\nExpected: 400 Bad Request with field-level error map"
+          }
+        },
+        {
+          "name": "Get Dealer by ID ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers/{{dealerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "{{dealerId}}"]
+            },
+            "description": "Fetch the PREMIUM dealer created earlier.\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "Get Dealer by ID - Not Found ❌ 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "UUID that doesn't exist.\n\nExpected: 404 Not Found"
+          }
+        },
+        {
+          "name": "Get Dealer by ID - Cross-Tenant ❌ 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant2Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50Ml91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers/{{dealerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "{{dealerId}}"]
+            },
+            "description": "tenant2_user tries to read a dealer that belongs to tenant-1. Tenant scoping returns 404 (not 403) so we don't leak existence.\n\nExpected: 404 Not Found"
+          }
+        },
+        {
+          "name": "List Dealers - Default Pagination ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers"]
+            },
+            "description": "Default page (page=0, size=20, sort=name ASC).\n\nExpected: 200 OK with Page<DealerResponse>"
+          }
+        },
+        {
+          "name": "List Dealers - Custom Page & Sort ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers?page=0&size=5&sort=email,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers"],
+              "query": [
+                { "key": "page",  "value": "0" },
+                { "key": "size",  "value": "5" },
+                { "key": "sort",  "value": "email,desc" }
+              ]
+            },
+            "description": "First page with 5 results, sorted by email descending.\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "Patch Dealer - Change Name & Subscription ✅",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ABC Motors Updated\",\n  \"subscriptionType\": \"BASIC\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/dealers/{{dealerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "{{dealerId}}"]
+            },
+            "description": "Partial update — only the supplied fields are changed.\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "Patch Dealer - Change Email Back to PREMIUM ✅",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionType\": \"PREMIUM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/dealers/{{dealerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "{{dealerId}}"]
+            },
+            "description": "Restore dealer subscription to PREMIUM (needed for PREMIUM vehicle filter tests).\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "Patch Dealer - Not Found ❌ 404",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ghost Dealer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/dealers/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Expected: 404 Not Found"
+          }
+        },
+        {
+          "name": "Delete Dealer ✅ 204",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers/{{dealer2Id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "{{dealer2Id}}"]
+            },
+            "description": "Deletes the BASIC dealer (dealer2Id). Only run after vehicle tests since dealer2Id is not used by vehicles.\n\nExpected: 204 No Content"
+          }
+        },
+        {
+          "name": "Delete Dealer - Not Found ❌ 404",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Expected: 404 Not Found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Vehicles",
+      "item": [
+        {
+          "name": "Create Vehicle - AVAILABLE ✅",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('vehicleId', json.id);",
+                  "    console.log('Saved vehicleId:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Toyota Camry 2024\",\n  \"price\": 28500.00,\n  \"status\": \"AVAILABLE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
+            "description": "Creates an AVAILABLE vehicle linked to the PREMIUM dealer. Saves ID as {{vehicleId}}.\n\nExpected: 201 Created"
+          }
+        },
+        {
+          "name": "Create Vehicle - SOLD ✅",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Honda Civic 2023\",\n  \"price\": 22000.00,\n  \"status\": \"SOLD\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
+            "description": "Creates a SOLD vehicle for the same PREMIUM dealer.\n\nExpected: 201 Created"
+          }
+        },
+        {
+          "name": "Create Vehicle - High Price ✅",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"BMW X5 2024\",\n  \"price\": 75000.00,\n  \"status\": \"AVAILABLE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
+            "description": "Creates a high-price AVAILABLE vehicle (useful for price range filter tests).\n\nExpected: 201 Created"
+          }
+        },
+        {
+          "name": "Create Vehicle - Dealer Not In Tenant ❌ 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant2Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50Ml91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Stolen Car\",\n  \"price\": 5000.00,\n  \"status\": \"AVAILABLE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
+            "description": "tenant2_user tries to link a vehicle to tenant-1's dealer. The dealer lookup is tenant-scoped so it returns 404.\n\nExpected: 404 Not Found"
+          }
+        },
+        {
+          "name": "Create Vehicle - Validation Error ❌ 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealerId\": null,\n  \"model\": \"\",\n  \"price\": -100,\n  \"status\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
+            "description": "All required fields missing or invalid.\n\nExpected: 400 Bad Request with field-level errors"
+          }
+        },
+        {
+          "name": "Get Vehicle by ID ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/{{vehicleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "{{vehicleId}}"]
+            },
+            "description": "Expected: 200 OK"
+          }
+        },
+        {
+          "name": "Get Vehicle - Not Found ❌ 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Expected: 404 Not Found"
+          }
+        },
+        {
+          "name": "List Vehicles - No Filters ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"]
+            },
+            "description": "All vehicles for tenant-1, default pagination (page=0, size=20, sort=model ASC).\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "List Vehicles - Filter by Model ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?model=toyota",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [{ "key": "model", "value": "toyota" }]
+            },
+            "description": "Case-insensitive partial match on model name.\n\nExpected: 200 OK — only Toyota vehicles"
+          }
+        },
+        {
+          "name": "List Vehicles - Filter by Status AVAILABLE ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?status=AVAILABLE",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [{ "key": "status", "value": "AVAILABLE" }]
+            },
+            "description": "Expected: 200 OK — only AVAILABLE vehicles"
+          }
+        },
+        {
+          "name": "List Vehicles - Filter by Status SOLD ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?status=SOLD",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [{ "key": "status", "value": "SOLD" }]
+            },
+            "description": "Expected: 200 OK — only SOLD vehicles"
+          }
+        },
+        {
+          "name": "List Vehicles - Filter by Price Range ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?priceMin=20000&priceMax=30000",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [
+                { "key": "priceMin", "value": "20000" },
+                { "key": "priceMax", "value": "30000" }
+              ]
+            },
+            "description": "Returns vehicles priced between $20,000 and $30,000.\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "List Vehicles - subscription=PREMIUM (tenant-scoped) ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?subscription=PREMIUM",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [{ "key": "subscription", "value": "PREMIUM" }]
+            },
+            "description": "Returns only vehicles whose dealer has subscriptionType=PREMIUM, still scoped to tenant-1.\n\nExpected: 200 OK — only vehicles from PREMIUM dealers within tenant-1"
+          }
+        },
+        {
+          "name": "List Vehicles - subscription=BASIC ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?subscription=BASIC",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [{ "key": "subscription", "value": "BASIC" }]
+            },
+            "description": "Returns only vehicles from BASIC dealers within tenant-1.\n\nExpected: 200 OK (empty if all vehicles are under the PREMIUM dealer)"
+          }
+        },
+        {
+          "name": "List Vehicles - All Filters Combined ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?model=toyota&status=AVAILABLE&priceMin=25000&priceMax=35000&subscription=PREMIUM&page=0&size=10&sort=price,asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [
+                { "key": "model",        "value": "toyota" },
+                { "key": "status",       "value": "AVAILABLE" },
+                { "key": "priceMin",     "value": "25000" },
+                { "key": "priceMax",     "value": "35000" },
+                { "key": "subscription", "value": "PREMIUM" },
+                { "key": "page",         "value": "0" },
+                { "key": "size",         "value": "10" },
+                { "key": "sort",         "value": "price,asc" }
+              ]
+            },
+            "description": "All filters active simultaneously with custom pagination.\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "Patch Vehicle - Update Price & Status ✅",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 27000.00,\n  \"status\": \"SOLD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/{{vehicleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "{{vehicleId}}"]
+            },
+            "description": "Partial update — only price and status are changed.\n\nExpected: 200 OK"
+          }
+        },
+        {
+          "name": "Patch Vehicle - Not Found ❌ 404",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 9999.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Expected: 404 Not Found"
+          }
+        },
+        {
+          "name": "Delete Vehicle ✅ 204",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/{{vehicleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "{{vehicleId}}"]
+            },
+            "description": "Expected: 204 No Content"
+          }
+        },
+        {
+          "name": "Delete Vehicle - Not Found ❌ 404",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Expected: 404 Not Found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Admin",
+      "item": [
+        {
+          "name": "Count Dealers by Subscription - GLOBAL_ADMIN ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic Z2xvYmFsX2FkbWluOmFkbWlu" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dealers/countBySubscription",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dealers", "countBySubscription"]
+            },
+            "description": "Returns global dealer counts (across ALL tenants) grouped by subscription type.\n\nExpected response:\n```json\n{ \"BASIC\": 1, \"PREMIUM\": 1 }\n```\n\nNote: This is a GLOBAL count, not per-tenant. Even though X-Tenant-Id is provided, GLOBAL_ADMIN is not restricted to it."
+          }
+        },
+        {
+          "name": "Count by Subscription - Regular User ❌ 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dealers/countBySubscription",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dealers", "countBySubscription"]
+            },
+            "description": "A regular USER tries to access an admin endpoint.\n\nExpected: 403 Forbidden"
+          }
+        },
+        {
+          "name": "Count by Subscription - No Auth ❌ 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dealers/countBySubscription",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dealers", "countBySubscription"]
+            },
+            "description": "No credentials provided.\n\nExpected: 401 Unauthorized"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Security Scenarios",
+      "item": [
+        {
+          "name": "Missing X-Tenant-Id on any endpoint ❌ 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"]
+            },
+            "description": "No X-Tenant-Id header. TenantFilter rejects immediately.\n\nExpected: 400 Bad Request - 'Missing or empty X-Tenant-Id header'"
+          }
+        },
+        {
+          "name": "Wrong Credentials ❌ 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant1Id}}" },
+              { "key": "Authorization","value": "Basic d3Jvbmc6Y3JlZGVudGlhbHM=" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers"]
+            },
+            "description": "Basic auth with wrong username/password (wrong:credentials).\n\nExpected: 401 Unauthorized"
+          }
+        },
+        {
+          "name": "Cross-Tenant Read ❌ 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant2Id}}" },
+              { "key": "Authorization","value": "Basic dGVuYW50MV91c2VyOnBhc3N3b3Jk" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers"]
+            },
+            "description": "tenant1_user sends X-Tenant-Id: tenant-2. TenantFilter detects the mismatch.\n\nExpected: 403 Forbidden - 'Cross-tenant access denied'"
+          }
+        },
+        {
+          "name": "GLOBAL_ADMIN can read any tenant ✅",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Tenant-Id",  "value": "{{tenant2Id}}" },
+              { "key": "Authorization","value": "Basic Z2xvYmFsX2FkbWluOmFkbWlu" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dealers",
+              "host": ["{{baseUrl}}"],
+              "path": ["dealers"]
+            },
+            "description": "GLOBAL_ADMIN has no tenantId restriction so can pass any X-Tenant-Id. Returns dealers for tenant-2.\n\nExpected: 200 OK (empty list if no dealers exist for tenant-2)"
+          }
+        }
+      ]
+    }
+  ]
+}
