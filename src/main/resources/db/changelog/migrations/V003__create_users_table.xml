@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="003-create-users-table" author="dealer-inventory">
+        <createTable tableName="app_users">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <!-- NULL means GLOBAL_ADMIN — not restricted to any tenant -->
+            </column>
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="003-seed-users" author="dealer-inventory">
+        <!-- Passwords use {noop} prefix (plaintext) for simplicity in dev.
+             In production, replace with {bcrypt} hashed values.
+             tenant1_user → password
+             tenant2_user → password
+             global_admin → admin
+        -->
+        <insert tableName="app_users">
+            <column name="username" value="tenant1_user"/>
+            <column name="password" value="{noop}password"/>
+            <column name="tenant_id" value="tenant-1"/>
+            <column name="role" value="ROLE_USER"/>
+        </insert>
+        <insert tableName="app_users">
+            <column name="username" value="tenant2_user"/>
+            <column name="password" value="{noop}password"/>
+            <column name="tenant_id" value="tenant-2"/>
+            <column name="role" value="ROLE_USER"/>
+        </insert>
+        <insert tableName="app_users">
+            <column name="username" value="global_admin"/>
+            <column name="password" value="{noop}admin"/>
+            <column name="tenant_id" valueComputed="NULL"/>
+            <column name="role" value="ROLE_GLOBAL_ADMIN"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

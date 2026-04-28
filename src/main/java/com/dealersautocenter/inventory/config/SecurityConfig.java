@@ -1,6 +1,5 @@
 package com.dealersautocenter.inventory.config;
 
-import com.dealersautocenter.inventory.shared.security.CustomUserDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -8,13 +7,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import java.util.Map;
 
 /**
  * Spring Security configuration.
@@ -44,22 +39,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        PasswordEncoder enc = passwordEncoder();
-        Map<String, CustomUserDetails> users = Map.of(
-                "tenant1_user", new CustomUserDetails("tenant1_user", enc.encode("password"), "tenant-1", "ROLE_USER"),
-                "tenant2_user", new CustomUserDetails("tenant2_user", enc.encode("password"), "tenant-2", "ROLE_USER"),
-                "global_admin",  new CustomUserDetails("global_admin",  enc.encode("admin"),    null,       "ROLE_GLOBAL_ADMIN")
-        );
-        return username -> {
-            CustomUserDetails user = users.get(username);
-            if (user == null) throw new UsernameNotFoundException("User not found: " + username);
-            return user;
-        };
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean

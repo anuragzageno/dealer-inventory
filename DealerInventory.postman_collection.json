@@ -359,7 +359,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Toyota Camry 2024\",\n  \"price\": 28500.00,\n  \"status\": \"AVAILABLE\"\n}"
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Toyota Camry 2024\",\n  \"price\": 28500.00\n}"
             },
             "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
             "description": "Creates an AVAILABLE vehicle linked to the PREMIUM dealer. Saves ID as {{vehicleId}}.\n\nExpected: 201 Created"
@@ -376,7 +376,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Honda Civic 2023\",\n  \"price\": 22000.00,\n  \"status\": \"SOLD\"\n}"
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"Honda Civic 2023\",\n  \"price\": 22000.00\n}"
             },
             "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
             "description": "Creates a SOLD vehicle for the same PREMIUM dealer.\n\nExpected: 201 Created"
@@ -393,7 +393,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"BMW X5 2024\",\n  \"price\": 75000.00,\n  \"status\": \"AVAILABLE\"\n}"
+              "raw": "{\n  \"dealerId\": \"{{dealerId}}\",\n  \"model\": \"BMW X5 2024\",\n  \"price\": 75000.00\n}"
             },
             "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
             "description": "Creates a high-price AVAILABLE vehicle (useful for price range filter tests).\n\nExpected: 201 Created"
@@ -427,7 +427,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dealerId\": null,\n  \"model\": \"\",\n  \"price\": -100,\n  \"status\": null\n}"
+              "raw": "{\n  \"dealerId\": null,\n  \"model\": \"\",\n  \"price\": -100\n}"
             },
             "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] },
             "description": "All required fields missing or invalid.\n\nExpected: 400 Bad Request with field-level errors"

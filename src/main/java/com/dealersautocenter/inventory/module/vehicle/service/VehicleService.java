@@ -3,6 +3,7 @@ package com.dealersautocenter.inventory.module.vehicle.service;
 import com.dealersautocenter.inventory.module.dealer.domain.Dealer;
 import com.dealersautocenter.inventory.module.dealer.repository.DealerRepository;
 import com.dealersautocenter.inventory.module.vehicle.domain.Vehicle;
+import com.dealersautocenter.inventory.module.vehicle.domain.VehicleStatus;
 import com.dealersautocenter.inventory.module.vehicle.dto.VehicleFilterParams;
 import com.dealersautocenter.inventory.module.vehicle.dto.VehiclePatchRequest;
 import com.dealersautocenter.inventory.module.vehicle.dto.VehicleRequest;
@@ -40,7 +41,7 @@ public class VehicleService {
                 .dealer(dealer)
                 .model(request.model())
                 .price(request.price())
-                .status(request.status())
+                .status(VehicleStatus.AVAILABLE)
                 .build();
 
         return VehicleResponse.from(vehicleRepository.save(vehicle));

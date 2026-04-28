@@ -1,6 +1,5 @@
 package com.dealersautocenter.inventory.module.vehicle.dto;
 
-import com.dealersautocenter.inventory.module.vehicle.domain.VehicleStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -17,8 +16,5 @@ public record VehicleRequest(
 
         @NotNull(message = "Price is required")
         @Positive(message = "Price must be positive")
-        BigDecimal price,
-
-        @NotNull(message = "Status is required")
-        VehicleStatus status
+        BigDecimal price
 ) {}
